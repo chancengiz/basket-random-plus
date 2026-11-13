@@ -39,6 +39,15 @@ input:focus-visible{outline:3px solid var(--led)}
 .go.p{background:#7a3fc4;box-shadow:inset -4px -4px 0 #4f2585,inset 4px 4px 0 #b083ff}
 .go.f{background:#1f8a4c;box-shadow:inset -4px -4px 0 #136034,inset 4px 4px 0 #6fe0a0}
 .big .w2{grid-column:span 2}
+.card.widec{width:min(96%,920px)}
+.tabs{display:flex;gap:5px}.tabs button{flex:1 1 0;min-width:0}
+.cols{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:6px}
+.ci{display:grid;grid-template-columns:auto minmax(0,1fr);gap:.8em;align-items:center;text-align:left;padding:.6em .7em;line-height:1.7;font-size:clamp(7px,1cqw,12px);background:#1b2348;box-shadow:inset 0 0 0 2px #2c3870}
+.ci canvas{position:static;inset:auto;width:clamp(26px,3.4cqw,40px);height:clamp(26px,3.4cqw,40px);object-fit:contain;image-rendering:pixelated}
+.ci b{display:block;color:var(--led);font-weight:400}.ci span{color:var(--mute)}
+.ci.done{box-shadow:inset 0 0 0 2px var(--good)}
+@media (max-width:760px){.cols{grid-template-columns:repeat(2,minmax(0,1fr))}}
+@media (max-width:460px){.cols{grid-template-columns:minmax(0,1fr)}}
 .achs{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:6px;text-align:left}
 .ach{background:#1b2348;padding:.7em .8em;font-size:clamp(6px,.85cqw,10px);line-height:1.7;color:var(--mute);box-shadow:inset 0 0 0 2px #2c3870}
 .ach b{display:block;color:var(--led);font-weight:400;margin-bottom:.2em}
@@ -95,7 +104,8 @@ td{text-align:center}
         <button class="go y" id="shootBtn">ATIŞ YARIŞI</button>
         <button class="go y" id="dunkBtn">SMAÇ YARIŞI</button>
         <button class="go" id="surviveBtn">HAYATTA KAL</button>
-        <button class="go p w2" id="achBtn">BAŞARIMLAR</button>
+        <button class="go p" id="achBtn">BAŞARIMLAR</button>
+        <button class="go b" id="colBtn">KOLEKSİYON</button>
       </div>
       <p class="keys">KIRMIZI <kbd>W</kbd> / sol ekran · MAVİ <kbd>↑</kbd> / sağ ekran · Mola <kbd>ESC</kbd> · İKİLİ: P1 <kbd>W</kbd> + P2 <kbd>↑</kbd> CPU'ya karşı<br>Kısa bas = küçük sekme · Basılı tut = tam zıplama + kol kalkar · Topu tutarken bırak = atış<br>FUTBOL: topa ayağınla dokun = sür · basılı tut = şut gücü · bırak = şut · rakibin topuna değ = kap</p>
     </div>
@@ -121,6 +131,14 @@ td{text-align:center}
       <p class="sub" id="lifeStats"></p>
       <div class="achs" id="achList"></div>
       <button class="go" id="achBack">GERİ</button></div>
+  </div>
+
+  <div class="ov" id="colOv" hidden>
+    <div class="card widec"><h1>KOLEKSİYON</h1>
+      <div class="tabs" id="colTabs"><button data-t="b" aria-pressed="true">NESNELER</button><button data-t="m">KURALLAR</button></div>
+      <p class="sub" id="colInfo"></p>
+      <div class="cols" id="colList"></div>
+      <button class="go" id="colBack">GERİ</button></div>
   </div>
 
   <div class="ov" id="cupOv" hidden>
@@ -200,7 +218,8 @@ const ACH=[['first','İLK BASKET','İlk sayını at.'],['dunk','SMAÇ KRALI','Bi
  ['survive5','HAYATTA KALAN','Hayatta kal modunda 5 sayı at.'],['dunk10','SMAÇ USTASI','Smaç yarışında 10 puan topla.'],['halloween','KORKUSUZ','Cadılar Bayramı sahasında sayı at.'],
  ['space','UZAY ATLETİ','Uzay istasyonunda sayı at.'],['split','ÇOK TOPLU','Çoğalan topla sayı at.'],['strike','STRIKE!','Bowling topuyla 2 oyuncu devir.'],
  ['timed','SAAT TAKİPÇİSİ','Süreli maç kazan.'],['wins10','ON GALİBİYET','Toplam 10 maç kazan.'],
- ['goal3','GOLCÜ','Futbol topuyla bir maçta 3 gol at.'],['volley','VOLECİ','Voleyle gol at.'],['tackle','SERT MÜDAHALE','Müdahaleyle rakipten top kap.']];
+ ['goal3','GOLCÜ','Futbol topuyla bir maçta 3 gol at.'],['volley','VOLECİ','Voleyle gol at.'],['tackle','SERT MÜDAHALE','Müdahaleyle rakipten top kap.'],
+ ['col10','KOLEKSİYONCU','10 farklı nesneyle sayı at.'],['col50','MÜZE MÜDÜRÜ','50 farklı nesneyle sayı at.']];
 let achSet=new Set();try{achSet=new Set(JSON.parse(localStorage.getItem('brp3_ach')||'[]'))}catch(e){}
 const toasts=[];
 function unlock(id){if(achSet.has(id))return;const a=ACH.find(x=>x[0]===id);if(!a)return;achSet.add(id);try{localStorage.setItem('brp3_ach',JSON.stringify([...achSet]))}catch(e){}toasts.push({s:a[1],t:200});if(G)G.unlocked.push(a[1]);sfx.ach()}
@@ -421,7 +440,7 @@ const MODS=[
  {k:'confRain',n:'KONFETİ YAĞMURU',w:3,x:'z_confRain'},
  {k:'blizzard',n:'KAR FIRTINASI',w:3,x:'z_blizzard'},
  {k:'fog',n:'YOĞUN SİS',w:3,x:'z_fog'},
- {k:'fastLegs',n:'ROKET BACAKLAR',w:3,x:'z_fastLegs'},
+ {k:'fastLegs',n:'ROKET AYAKKABI',w:3,x:'z_fastLegs'},
  {k:'luckyJump',n:'ŞANSLI ZIPLAMA',w:3,x:'z_luckyJump'},
  {k:'drunkAll',n:'HERKES SARHOŞ',w:3,x:'z_drunkAll'},
  {k:'magHands',n:'MIKNATIS ELLER',w:3,x:'z_magHands'},
@@ -490,7 +509,7 @@ const MODS=[
  {k:'sepia',n:'SESSİZ FİLM',w:3,x:'y_v3'},
 ];
 const POWERS=[{k:'jump',n:'SÜPER ZIPLAMA',c:'#ffd84a'},{k:'magnet',n:'MIKNATIS',c:'#ff5a5a'},{k:'freeze',n:'DONDUR',c:'#8fd8ff'},{k:'aim',n:'NİŞANCI',c:'#5fd068'},
- {k:'arm',n:'UZUN KOL',c:'#ffb066'},{k:'rocket',n:'ROKET',c:'#ff7a1a'},{k:'shield',n:'KALKAN',c:'#9fe0ff'},{k:'bighoop',n:'DEV POTA',c:'#5fd068'},{k:'drunk',n:'SARHOŞ',c:'#c27aff'},{k:'double',n:'ÇİFT SAYI',c:'#ffe14a'},
+ {k:'arm',n:'UZUN KOL',c:'#ffb066'},{k:'rocket',n:'ROKET AYAKKABI',c:'#ff7a1a'},{k:'shield',n:'KALKAN',c:'#9fe0ff'},{k:'bighoop',n:'DEV POTA',c:'#5fd068'},{k:'drunk',n:'SARHOŞ',c:'#c27aff'},{k:'double',n:'ÇİFT SAYI',c:'#ffe14a'},
  {k:'pull',n:'TOP ÇEKİCİ',c:'#ff9f43'},{k:'narrow',n:'DAR POTA',c:'#ff5a5a'},{k:'tornado',n:'HORTUM',c:'#c8d8e8'}];
 const CPU_TEAMS=['KARTALLAR','BOĞALAR','YILDIZLAR','FIRTINA','KAPLANLAR','ŞİMŞEKLER','KURTLAR','ROKETLER'];
 
@@ -553,7 +572,107 @@ function legSprite(b,kit,skin,facing,suit){
   else{srect(s,x,1,lw,b.lh,C('#2a2c36'));srect(s,sx,1+b.lh,lw+1,2,C('#141414'))}
   outline(s,OUT);s.ox=x+lw/2;s.oy=1;return s;
 }
+/* ---------- shaped objects: own silhouette + own way of turning ---------- */
+const PAL={W:'#f4f5fa',w:'#c9cde0',G:'#8a90a4',g:'#4a4f5c',K:'#1a1a22',R:'#e8423a',r:'#9c2020',O:'#ef7d22',o:'#b4530f',Y:'#ffe14a',y:'#c8901e',
+ L:'#4fd16a',l:'#1d7a34',B:'#3fa6ff',b:'#1b4f96',C:'#7ae8ff',c:'#2a8ab8',P:'#ff7ad1',p:'#a82a7a',V:'#9a6bff',v:'#5a3ab8',N:'#9a5a2a',n:'#5a3010',
+ T:'#f3c39a',t:'#c08a5a',S:'#e8ecf4',E:'#141414',H:'#ffffff'};
+// o: how it turns. (none)=rolls like a ball · fast=spins by itself · vel=points where it flies · up=stays upright, faces its direction · flip=coin flip · sway=flutters
+const SHAPES={
+ boomerang:{o:'fast',sp:.42,rows:['......N......','.....NNN.....','....NNYNN....','...NNN.NNN...','..NNN...NNN..','.NNN.....NNN.','RRN.......NRR','RR.........RR']},
+ anvil:{o:'up',nt:1,rows:['SSSSSSSSSSSS.','ggggggggggggg','.gggggggggg..','...gggggg....','....gggg.....','....gggg.....','...gggggg....','..gggggggg...','..GGGGGGGG...']},
+ rocket:{o:'vel',rows:['RR...........','.RRWWWWWWR...','..WWWWBWWRR..','YOWWWBBBWRRR.','..WWWWBWWRR..','.RRWWWWWWR...','RR...........']},
+ bullet:{o:'vel',rows:['RR.........S..','.RR........SS.','RRNNNNNNNNNSSS','.RR........SS.','RR.........S..']},
+ bananab:{rows:['..........n.','.........YY.','........YYY.','.......YYYy.','Y....YYYYYy.','YYYYYYYYYy..','.YYYYYYyy...','..yyyyy.....']},
+ duck:{o:'up',rows:['......YYY...','.....YYYYY..','.....YYEYYOO','.....YYYYYO.','Y.....YYY...','YY..YYYYYY..','YYYYYYYYYYY.','YYYYyyYYYYY.','.YYYYYYYYY..','..YYYYYYY...']},
+ frisbee:{rows:['nNNNNNNNNNn','NYYYYRRYYYN','.YYRYYRYYY.','.YYYYYYYRY.','..YYRRYYY..','..YYRRYYY..','...YYYYY...','...YYYRY...','....YYY....','....YYY....','.....Y.....']},
+ heart:{o:'up',rows:['.RRR...RRR.','RPRRR.RRRRR','RPRRRRRRRRR','RRRRRRRRRRR','RRRRRRRRRRr','.RRRRRRRRr.','..RRRRRRr..','...RRRRr...','....RRr....','.....r.....']},
+ diamond:{o:'up',rows:['..HCCCCCc..','.HCCCCCCCc.','CCCcCCCcCCc','.cCCcCcCCc.','..cCCcCCc..','...cCCCc...','....cCc....','.....c.....']},
+ comet:{o:'fast',sp:.16,rows:['.....Y.....','....YYY....','....YYY....','YYYYYYYYYYY','.YYYYHYYYY.','..YYYYYYY..','...YYYYY...','..YYYYYYY..','.YYY...YYY.','.Y.......Y.']},
+ coin:{o:'flip',rows:['..YYYYY..','.YHYYYYy.','YHYyyyYYy','YYYyYYYYy','YYYyyyYYy','YYYYYyYYy','YYYyyyYYy','.YYYYYYy.','..yyyyy..']},
+ cloud:{o:'up',nt:1,rows:['....WWW.......','...WWWWW.WW...','.WWWWWWWWWWW..','WWWWWWWWWWWWW.','WWWWWWWWWWWWWW','wWWWWWWWWWWWWw','.wwwwwwwwwwww.']},
+ feather:{o:'sway',rows:['....WW','...WWW','..WWwW','..WwWW','.WWwWW','.WwWW.','.WwWW.','WWwW..','WwWW..','.wW...','.w....','w.....']},
+ bee:{o:'up',rows:['...WW.WW...','..WWWWWWW..','...WWWWW...','.YYKYYKYYY.','KYYKYYKYYEY','KYYKYYKYYYY','.YYKYYKYYY.'],
+      rows2:['...........','...........','.WWWWWWWWW.','.YYKYYKYYY.','KYYKYYKYYEY','KYYKYYKYYYY','.YYKYYKYYY.']},
+ cactus:{o:'up',rows:['.....LL....','....LLlL...','.L..LLlL...','LL..LLlL..L','LL..LLlL.LL','LLLLLLlL.LL','.LLLLLlLLLL','....LLlLLL.','....LLlL...','....LLlL...','...NNNNNN..','....NNNN...']},
+ turtle:{o:'up',rows:['...lllllll....','..lLLlLlLLl...','.lLlLLLLLlLlLL','.lLLLlLlLLLlLE','NlllllllllllLL','.LL......LL...'],
+      rows2:['...lllllll....','..lLLlLlLLl...','.lLlLLLLLlLlLL','.lLLLlLlLLLlLE','NlllllllllllLL','..LL....LL....']},
+ worm:{o:'up',rows:['..........LL.','.LL.LL.LL.LLL','LLLLLLLLLLLEL','LLLLLLLLLLLLL','lLLlLLlLLlLL.','.l..l..l..l..'],
+      rows2:['..........LL.','..LL.LL.L.LLL','LLLLLLLLLLLEL','LLLLLLLLLLLLL','LlLLlLLlLLLL.','..l..l..l....']},
+ puppy:{o:'up',rows:['.........NN..','........NTTTN','........TTETT','N.......TTTTK','NT.....TTTT..','.TTTTTTTTT...','.TTTTTTTTT...','.TTTTTTTTT...','.TT.....TT...','.TT.....TT...'],
+      rows2:['.........NN..','........NTTTN','........TTETT','.N......TTTTK','.NT....TTTT..','.TTTTTTTTT...','.TTTTTTTTT...','.TTTTTTTTT...','..TT...TT....','..TT...TT....']},
+ robot:{o:'up',rows:['.....R.....','.....G.....','.GGGGGGGGG.','.GSSSSSSSG.','GGSCCSCCSGG','GGSCCSCCSGG','.GSSSSSSSG.','.GSKSKSKSG.','.GSSSSSSSG.','.GGGGGGGGG.']},
+ sumo:{o:'up',rows:['.....KKKKK.....','....KTTTTTK....','....TETTTET....','....TTTTTTT....','..TTTTTTTTTTT..','.TTTTTTTTTTTTT.','TTTTTTTTTTTTTTT','TTTTTTTTTTTTTTT','TTTTTTTtTTTTTTT','TTTTTTTTTTTTTTT','.BBBBBBBBBBBBB.','.BBBBBBbBBBBBB.','..TTTTTbTTTTT..','..TTTT.b.TTTT..','.TTTT.....TTTT.']},
+ potato:{rows:['...NNNNN....','.NNTTTTTNN..','NTTTTnTTTTN.','NTTnTTTTTTTN','NTTTTTTTnTTN','NTTTTTTTTTTN','.NTTnTTTTTN.','..NNTTTTNN..','....NNNN....']},
+ punch:{o:'vel',rows:['...RRRRRR...','..RRRRRRRR..','WWRRRRRRRRR.','WWRRRRRRRRRR','WWRRRRRRRRRR','WWRRRRRRRRR.','..RRRRRRRR..','..RRRRR.....','...RRR......']},
+ popcorn:{o:'up',rows:['..WW.WWW...','.WWWWWYWWW.','WWYWWWWWWWW','RRWRRWRRWRR','RRWRRWRRWRR','RRWRRWRRWRR','.RWRRWRRWR.','.RWRRWRRWR.','.RWRRWRRWR.','..RRRWRRR..']},
+ speaker:{o:'up',rows:['KKKKKKKKKK','KggggggggK','KggGGGGggK','KggGKKGggK','KggGGGGggK','KggggggggK','KgGGGGGGgK','KGGKKKKGGK','KGKKSSKKGK','KGKKSSKKGK','KGGKKKKGGK','KKKKKKKKKK']},
+ spring:{o:'up',rows:['RRRRRRRRR','.SSSSSSS.','GG.......','.SSSSSSS.','.......GG','.SSSSSSS.','GG.......','.SSSSSSS.','.......GG','.SSSSSSS.','RRRRRRRRR']},
+ lock:{o:'up',rows:['..GGGGG..','.GG...GG.','.G.....G.','.G.....G.','YYYYYYYYY','YYYYYYYYY','YYYKKKYYY','YYYYKYYYY','YYYYKYYYY','yYYYYYYYy','.yyyyyyy.']},
+ magnet:{rows:['WW.......WW','WW.......WW','RR.......BB','RR.......BB','RR.......BB','RRR.....BBB','.RRR...BBB.','.RRRRRBBBB.','..RRRRBBB..','...RRRBB...']},
+ butter:{rows:['YYYYYYYYYYYY','YHHHHHHHHHYy','YHYYYYYYYYYy','YYYYYYYYYYYy','YYYYYYYYYYYy','yyyyyyyyyyyy'],c:{Y:'#ffe48a',y:'#c8a83a'}},
+ piano:{o:'up',rows:['...VVVVVVV','...VVVVVVV','...V.....V','...V.....V','...V.....V','...V.....V','...V.....V','.VVV...VVV','VVVV..VVVV','VVVV..VVVV','.VV....VV.']},
+ vampire:{o:'up',nt:1,rows:['..v..v...v..v..','.vvv.vv.vv.vvv.','vvvvvvvvvvvvvvv','vvvvvvRvRvvvvvv','.vvvvvvvvvvvvv.','..v.vvWvWvv.v..','.......v.......'],
+      rows2:['......v.v......','.....vvvvv.....','..vvvvvvvvvvv..','.vvvvvRvRvvvvv.','vvvvvvvvvvvvvvv','vvv.vvWvWvv.vvv','v......v......v']},
+ bean:{rows:['....NNNNN.','..NNNNNNNN','.NNTNNNNNN','NNTNNNnNNN','NNNNNnNNN.','NNNNNNNN..','.NNNNN....']},
+ dead:{rows:['..WWWWWWW..','.WWWWWWWWW.','WWWWWWWWWWW','WKKKWWWKKKW','WKKKWWWKKKW','WWWWWKWWWWW','.WWWWWWWWW.','..WKWKWKW..','..WWWWWWW..']},
+ pinata:{rows:['......P......','C....PPP....C','.C...PPP...C.','..C.YYYYY.C..','...YYYYYYY...','.PPYYHYYYYPP.','PPPYYYYYYYPPP','.PPYYYYYYYPP.','...YYYYYYY...','..C.YYYYY.C..','.C...PPP...C.','C....PPP....C','......P......']},
+ balloon:{o:'up',rows:['...RRRRR...','..RRRRRRR..','.RRHRRRRRR.','RRHHRRRRRRR','RRHRRRRRRRR','RRRRRRRRRRR','RRRRRRRRRRR','RRRRRRRRRRr','.RRRRRRRRr.','.RRRRRRRRr.','..RRRRRRr..','...RRRRr...','....RRr....','....rRr....']},
+ ghost:{o:'up',rows:['...WWWWW...','..WWWWWWW..','.WWWWWWWWW.','.WWKKWKKWW.','WWWKKWKKWWW','WWWWWWWWWWW','WWWWWKWWWWW','WWWWWWWWWWW','WWWWWWWWWWW','WWWWWWWWWWW','WW.WW.WW.WW'],c:{W:'#ddd6ff'}},
+ egg:{rows:['...WWW...','..WWWWW..','.WHWWWWW.','.WHWWWWW.','WWWWWWWWW','WWWWWWWWW','WWWWWWWWw','WWWWWWWWw','.WWWWWWw.','.wWWWWww.','..wwwww..'],c:{W:'#fff4dc',w:'#e2d0aa'}},
+ meteorb:{rows:['...GGGG....','.GGgGGGGG..','GGGGGgGGGG.','GgGGGGGGgGG','GGGGgGGGGGG','GGGGGGGGgGG','.GGgGGGGGG.','.GGGGGgGGG.','...GGGGG...'],c:{G:'#5a4a4a',g:'#ff7a1a'}},
+ sun:{o:'fast',sp:.04,rows:['......O......','.O....O....O.','..O.......O..','....YYYYY....','...YYYYYYY...','...YYHYYYY...','OO.YYYYYYY.OO','...YYYYYYY...','...YYYYYYY...','....YYYYY....','..O.......O..','.O....O....O.','......O......']},
+ moon:{o:'up',rows:['....WWWW..','..WWWW....','.WWwW.....','WWWW......','WWWW......','WwWW......','WWWWW.....','.WWWWW...W','..WWwWWWWW','...WWWWWW.']},
+ winter:{o:'fast',sp:.08,rows:['.....C.....','...C.C.C...','.C..CCC..C.','..C..C..C..','...CCCCC...','CCCCCHCCCCC','...CCCCC...','..C..C..C..','.C..CCC..C.','...C.C.C...','.....C.....'],c:{C:'#c8f6ff'}},
+ lucky:{rows:['..LL...LL..','.LLLL.LLLL.','.LLLL.LLLL.','..LLLLLLL..','....LLL....','..LLLLLLL..','.LLLL.LLLL.','.LLLL.LLLL.','..LL.l.LL..','.....l.....','....ll.....']},
+ lucky7:{o:'up',rows:['RRRRRRRRR','RRRRRRRRR','......RRR','.....RRR.','....RRR..','....RRR..','...RRR...','...RRR...','..RRR....','..RRR....']},
+ paint:{o:'vel',rows:['.....BBBB..','...BBBHBBB.','.BBBBBBHBBB','BBBBBBBBBBB','.BBBBBBBBBB','...BBBBBBB.','.....BBBB..']},
+ stinky:{rows:['..WWWWW...','..RRRRR...','..WWWWW...','..LLLLL...','..LLLLL...','..LLLLL...','..LLLLLL..','..LLLLLLLL','..LLLLLLLL','...LLLLLLL','....lllll.'],c:{L:'#9aaa4a',l:'#5a6a1a'}},
+ skate:{o:'up',nt:1,rows:['B.............B','BBBBBBBBBBBBBBB','.BBBBBBBBBBBBB.','..ww.......ww..','..ww.......ww..']},
+ heavier:{o:'up',rows:['..ggggg..','.gg...gg.','.g.....g.','.gg...gg.','.ggggggg.','ggGgggggg','gGggggggg','ggggggggg','ggggggggg','.ggggggg.','..ggggg..']},
+ ninja:{o:'fast',sp:.5,rows:['.....S.....','.....S.....','....SSS....','....SGS....','..SSGKGSS..','SSSGKKKGSSS','..SSGKGSS..','....SGS....','....SSS....','.....S.....','.....S.....']},
+ timeball:{o:'up',rows:['.RR.....RR.','RRR.....RRR','...WWWWW...','..WWWKWWW..','.WWWWKWWWW.','.WWWWKWWWW.','.WWWWKKKWW.','.WWWWWWWWW.','..WWWWWWW..','...WWWWW...','..G.....G..']},
+ slowmo:{o:'up',rows:['NNNNNNNNN','.CCCCCCC.','.CYYYYYC.','..CYYYC..','...CYC...','....C....','...CYC...','..C.Y.C..','.C..Y..C.','.CYYYYYC.','.CCCCCCC.','NNNNNNNNN']},
+ homing:{o:'vel',rows:['WW...........','.WWWW........','..WWWWWWW....','...wWWWWWWWW.','....wwwwwwWWW','....wWWWW....','.....wWW.....','......w......']},
+ honey:{o:'up',rows:['...YYYY...','..YYYYYY..','.NNNNNNNN.','OOOOOOOOOO','OOHOOOOOOO','OOHOOOOOOo','OOOOOOOOOo','OOOOOOOOOo','.OOOOOOOo.','..oooooo..']},
+ spinner:{o:'fast',sp:.4,rows:['.....LLL.....','....LLWLL....','....LLLLL....','.....LLL.....','.....LLL.....','....LLKLL....','...LLLLLLL...','.LLLLL.LLLLL.','LLWLL...LLWLL','LLLLL...LLLLL','.LLL.....LLL.']},
+ grower:{o:'up',rows:['...NNNNN...','..NNTNNNN..','.NNNNNNTTN.','NTTNNNNTTNN','NTTNNNNNNNN','NNNNNTNNNNN','...WWWWW...','...WWWWW...','...WWWWW...','....WWW....']},
+ zap:{o:'up',rows:['..SSSS..','LLLLLLLL','LLLLLLLL','LLLYYLLL','LLYYLLLL','LYYYYYLL','LLLYYLLL','LLYYLLLL','LLYLLLLL','KKKKKKKK','KKKKKKKK']},
+ storm:{o:'up',rows:['....YYYY','...YYYY.','..YYYY..','.YYYY...','YYYYYYYY','...YYYY.','..YYYY..','.YYYY...','YYYY....','YYY.....','YY......','Y.......']},
+ magic:{o:'up',rows:['......VV.....','.....VVV.....','.....VVVV....','....VVYVV....','....VVVVV....','...VVVVVYV...','...VYVVVVV...','..VVVVVVVVV..','..YYYYYYYYY..','VVVVVVVVVVVVV','.vvvvvvvvvvv.']},
+};
+SHAPES.coinflip={...SHAPES.coin,c:{Y:'#d8dce8',y:'#6a7088'}};
+SHAPES.hoopmag={...SHAPES.magnet,c:{B:'#e8423a'}};
+SHAPES.popper={...SHAPES.balloon,z:.86,c:{R:'#4fd16a',r:'#1d7a34'}};
+SHAPES.quake={...SHAPES.meteorb,c:{G:'#9a7a5a',g:'#5a4028'}};
+const RENAME={boomerang:'BUMERANG',anvil:'ÖRS',rocket:'ROKET',bullet:'DART',bananab:'MUZ',frisbee:'PİZZA DİLİMİ',heart:'KALP',diamond:'ELMAS',comet:'KAYAN YILDIZ',coin:'ALTIN PARA',cloud:'BULUT',feather:'TÜY',
+ bee:'ARI',cactus:'KAKTÜS',turtle:'KAPLUMBAĞA',worm:'TIRTIL',puppy:'KÖPEK',robot:'ROBOT',sumo:'SUMO',speaker:'HOPARLÖR',spring:'YAY',lock:'ASMA KİLİT',magnet:'MIKNATIS',butter:'TEREYAĞI',piano:'NOTA',
+ vampire:'YARASA',dead:'KURU KAFA',ghost:'HAYALET',meteorb:'METEOR',quake:'KAYA',sun:'GÜNEŞ',moon:'AY',winter:'KAR TANESİ',lucky:'YONCA',lucky7:'ŞANSLI 7',paint:'BOYA DAMLASI',stinky:'KOKMUŞ ÇORAP',
+ skate:'KAYKAY',heavier:'GÜLLE',ninja:'NİNJA YILDIZI',timeball:'ÇALAR SAAT',slowmo:'KUM SAATİ',homing:'KAĞIT UÇAK',honey:'BAL KÜPÜ',spinner:'STRES ÇARKI',grower:'MANTAR',zap:'PİL',storm:'ŞİMŞEK',magic:'SİHİRBAZ ŞAPKASI',popper:'PATLAK BALON'};
+BALLS.forEach(b=>{if(RENAME[b.k])b.n=RENAME[b.k]});
+function rowSprite(rows,cols,z){
+  const w0=Math.max(...rows.map(r=>r.length)),h0=rows.length,w=Math.max(2,Math.round(w0*z)),h=Math.max(2,Math.round(h0*z)),s=spr(w+2,h+2);
+  for(let y=0;y<h;y++){const row=rows[Math.min(h0-1,Math.floor(y/z))];for(let x=0;x<w;x++){const ch=row[Math.min(w0-1,Math.floor(x/z))];if(ch&&ch!=='.')sset(s,x+1,y+1,C(cols[ch]||'#ff00ff'))}}
+  outline(s,OUT);return s;
+}
+function shapeSprite(t){const sh=SHAPES[t.k],base=BALLS.find(b=>b.k===t.k),z=(base?t.r/base.r:1)*(sh.z||1),cols=sh.c?{...PAL,...sh.c}:PAL,s=rowSprite(sh.rows,cols,z);if(sh.rows2)s.alt=rowSprite(sh.rows2,cols,z);return s}
+function sprMir(s,key,fy){if(!s[key]){const n=spr(s.w,s.h);for(let y=0;y<s.h;y++)for(let x=0;x<s.w;x++)n.d[y*s.w+x]=fy?s.d[(s.h-1-y)*s.w+x]:s.d[y*s.w+s.w-1-x];s[key]=n}return s[key]}
+function sprSq(s){if(!s.sq_)s.sq_=[1,.75,.4,.12,.4,.75].map(f=>{if(f===1)return s;const w=Math.max(3,Math.round(s.w*f)),n=spr(w,s.h);for(let y=0;y<s.h;y++)for(let x=0;x<w;x++)n.d[y*w+x]=s.d[y*s.w+Math.min(s.w-1,Math.floor((x+.5)/w*s.w))];return n});return s.sq_}
+function ballView(b,a){
+  const sh=SHAPES[b.def.k];let s=b.spr;if(!sh||!sh.o)return[s,a];
+  const v=b.body.velocity,sp=Math.hypot(v.x,v.y),h=b.holder;
+  if(s.alt&&!h&&sp>.5&&((R.t>>3)&1))s=s.alt;
+  switch(sh.o){
+    case 'fast':if(!h&&sp>1.2)b.va=(b.va||0)+sh.sp*(v.x<0?-1:1);return[s,(b.va||0)+(h?0:a*.2)];
+    case 'vel':{if(h)b.va=h.facing>0?-.6:Math.PI+.6;else if(sp>1.5)b.va=Math.atan2(v.y,v.x);const A=b.va==null?0:b.va;return[Math.cos(A)<0?sprMir(s,'fy_',1):s,A]}
+    case 'up':{if(h)b.vf=h.facing;else if(Math.abs(v.x)>.4)b.vf=v.x>0?1:-1;return[(b.vf||1)<0?sprMir(s,'fx_',0):s,h||sh.nt?0:clamp(v.x*.035,-.45,.45)]}
+    case 'flip':{const fr=sprSq(s);return[fr[h||sp<.8?0:(R.t>>2)%fr.length],0]}
+    case 'sway':return[s,h?0:Math.sin(R.t*.1+b.r)*.5];
+  }
+  return[s,a];
+}
+
 function ballSprite(t){
+  if(SHAPES[t.k])return shapeSprite(t);
   const r=t.r,w=Math.ceil(r*2)+2,s=spr(w,w),c=w/2,RB=['#ff4d4d','#ff9f2e','#ffe14a','#4fd16a','#3fa6ff','#9a6bff'];
   for(let y=0;y<w;y++)for(let x=0;x<w;x++){
     const dx=x+.5-c,dy=y+.5-c,d=Math.hypot(dx,dy);
@@ -661,6 +780,7 @@ function newMatch(mode){
      shots:0,made:0};
   if(cup)G.names[1]=CUP.opps[CUP.stage];
   if(G.cpu&&!cup)G.names[1]='CPU';
+  G.force=PICK;
   $('hud').hidden=false;$('tbL').hidden=false;$('tbR').hidden=G.solo;
   $('tbL').textContent=G.solo?'BAS':coop?'P1':'KIRMIZI';$('tbR').textContent=coop?'P2':'MAVİ';
   for(let i=0;i<4;i++)pressed[i]=prevP[i]=false;particles.length=0;texts.length=0;
@@ -678,7 +798,7 @@ function pickMods(court){
 function newRound(serveTeam){
   Composite.clear(engine.world,false);
   const first=G.round===0;G.round++;
-  const F=null,shoot=G.mode==='shoot'||G.mode==='dunk';
+  const F=G.force||null,shoot=G.mode==='shoot'||G.mode==='dunk';
   if(G.mode==='survive')G.cpu=Math.min(3,1+Math.floor(G.surv/2));
   const court=F&&F.court?COURTS.find(c=>c.k===F.court):shoot?pick(COURTS.filter(c=>['street','night','indoor','beach','stadium','neon'].includes(c.k))):first?COURTS[0]:wpick(COURTS);
   const ballT=F&&F.ball?BALLS.find(c=>c.k===F.ball):G.mode==='soccer'?BALLS.find(c=>c.k==='soccer'):(first||shoot)?BALLS[0]:(Math.random()<(G.chaos?.25:.5)?BALLS[0]:wpick(BALLS.slice(1)));
@@ -711,7 +831,7 @@ function newRound(serveTeam){
     const c=Constraint.create({bodyA:a.body,bodyB:b.body,pointA:{x:0,y:-a.bh/4},pointB:{x:0,y:-b.bh/4},length:34*P,stiffness:.01,damping:.02});Composite.add(engine.world,c);R.ropes.push({c,ia:idx[i],ib:idx[i+1]})}}
   if(M.rain)for(let i=0;i<90;i++)R.rain.push({x:rnd(0,LW),y:rnd(0,LH),s:rnd(3,4.5)});
   if(M.mines){R.mines=[];const cand=[60,120,160,200,260].sort(()=>Math.random()-.5);for(const x of cand){if(R.mines.length>=3)break;if(R.players.every(p=>Math.abs(p.body.position.x/P-x)>14))R.mines.push({x,armed:true,t:0,crater:0})}}
-  modInit();modInit2();
+  modInit();modInit2();modInit3();
   renderBG();
 }
 function spawnBalls(){
@@ -741,7 +861,7 @@ function makePlayer(team,xl,idx){
   const neck=Constraint.create({bodyA:body,pointA:{x:0,y:-bh/2},bodyB:head,pointB:{x:0,y:hr*.8},length:0,stiffness:.95,damping:.05});
   Composite.add(engine.world,[body,head,neck]);
   const p={team,idx,facing,body,head,bw,bh,hr,armL:al*P,aw:b.aw,armT:0,ang:rnd(-130,130),jump:false,moreJump:10,waitT:0,wasG:true,air:0,idleT:Math.random()*30|0,
-    have:false,ready:false,frozenT:0,stealCd:0,downT:0,kit,look,alen:al,drunkT:0,rocket:false,boost:1,
+    have:false,ready:false,frozenT:0,stealCd:0,downT:0,kit,look,alen:al,drunkT:0,rocketT:0,boost:1,
     btn:team===1?(G.cpu?3:1):(G.coop?idx%2:0),sprB:BS.s,sprBN:FB&&FB.s,sprLg:LG,hip:BS.hip,legL:BS.legL,chg:0,legA:0,legW:0,kickT:0,kickPow:0,sprH:HS.s,sprHh:HSh,sprHs:HSs,sprA:armSprite(b.aw,al,kit,look.skin,M.suit)};
   p.armL0=p.armL;p.sprA0=p.sprA;
   body.plr=p;head.plr=p;
@@ -789,7 +909,7 @@ function shoulder(p){const o=rot(0,-p.bh/2+3*P,p.body.angle);return{x:p.body.pos
 function armAng(p){return -p.facing*p.armT*D2R}
 function hand(p){const s=shoulder(p),d=rot(0,p.armL,armAng(p));return{x:s.x+d.x,y:s.y+d.y}}
 function segDist(px_,py_,ax,ay,bx,by){const vx=bx-ax,vy=by-ay,t=clamp(((px_-ax)*vx+(py_-ay)*vy)/(vx*vx+vy*vy||1),0,1);return Math.hypot(px_-(ax+vx*t),py_-(ay+vy*t))}
-function jumpMul(p){return Math.pow(R.court.g,.25)*((R.M.superJump||R.fx[p.team].jump>0)?1.3:1)*(R.M.heavy?.72:1)*(p.slowT>0?.55:1)*(R.M.fastLegs?1.22:1)*(R.M.luckyJump?(p.lj||1):1)}
+function jumpMul(p){return Math.pow(R.court.g,.25)*((R.M.superJump||R.fx[p.team].jump>0)?1.3:1)*(R.M.heavy?.72:1)*(p.slowT>0?.55:1)*(R.M.luckyJump?(p.lj||1):1)}
 function controlPlayer(p,live,SW){
   const longA=R.fx[p.team].arm>0;if(longA!==!!p.longA){p.longA=longA;p.armL=p.armL0*(longA?1.5:1);if(longA&&!p.sprAL)p.sprAL=armSprite(p.aw,Math.round(p.alen*1.5),p.kit,p.look.skin,R.M.suit);p.sprA=longA?p.sprAL:p.sprA0}
   const B=p.body,a=wrap(B.angle),adeg=a/D2R,gr=grounded(p),fr=p.frozenT>0;
@@ -815,13 +935,13 @@ function controlPlayer(p,live,SW){
     if(ft)p.chg=0;
     if(!p.jump&&p.waitT<=0){
       p.jump=true;p.waitT=18;p.ang=0;p.moreJump=ft&&p.have?10:0;
-      if(gr){p.boost=p.rocket?1.6:1;if(p.rocket){p.rocket=false;rocketFx(p)}const jm=jumpMul(p)*p.boost;Body.setVelocity(B,{x:Math.sin(a)*KICK*jm*(R.M.reverse?-1:1),y:-Math.cos(a)*KICK*jm});Body.setAngularVelocity(B,140*Math.sin(a)*(50/60)*D2R/60);dust(B.position.x,floorAt(B.position.x),3);if(p.idx===0)sfx.jump()}
+      if(gr){const rk=p.rocketT>0;p.boost=rk?1.45:1;if(rk)rocketFx(p);const jm=jumpMul(p)*p.boost;Body.setVelocity(B,rk?{x:Math.sin(a)*KICK*jm*.2,y:-KICK*jm}:{x:Math.sin(a)*KICK*jm*(R.M.reverse?-1:1),y:-Math.cos(a)*KICK*jm});Body.setAngularVelocity(B,140*Math.sin(a)*(50/60)*D2R/60);dust(B.position.x,floorAt(B.position.x),3);if(p.idx===0)sfx.jump()}
     }
   }
   if(fall&&p.ready&&p.have){if(ft)kickBall(p,heldBy(p),p.chg,false);else throwBall(p)}
   else if(fall&&ft&&!p.have&&p.chg>.25){p.legW=p.legA;p.kickT=10;p.kickPow=p.chg}
   if(on){
-    if(p.moreJump<10){const jm=jumpMul(p)*(p.boost||1),u=rot(0,-1,B.angle);if(R.M.reverse)u.x=-u.x;Body.setVelocity(B,{x:B.velocity.x+u.x*ADD*jm,y:B.velocity.y+u.y*ADD*jm});p.moreJump+=1.8333}
+    if(p.moreJump<10){const jm=jumpMul(p)*(p.boost||1),u=rot(0,-1,B.angle);if(R.M.reverse)u.x=-u.x;if(p.rocketT>0){u.x*=.2;u.y=-1}Body.setVelocity(B,{x:B.velocity.x+u.x*ADD*jm,y:B.velocity.y+u.y*ADD*jm});p.moreJump+=1.8333}
     p.armT=Math.min(180,p.armT+10);
     if(ft)p.chg=Math.min(1.25,p.chg+(p.chg<1?1/32:1/64));
   }else{if(!fr)p.armT=Math.max(0,p.armT-10);if(ft)p.chg=0}
@@ -831,6 +951,8 @@ function controlPlayer(p,live,SW){
   if(p.frozenT>0)p.frozenT--;if(p.slowT>0){p.slowT--;if(R.t%10===0)particles.push({x:p.body.position.x+rnd(-8,8),y:p.body.position.y+p.bh/2,vx:0,vy:.5,l:20,c:C('#f2a81e'),s:1,g:.05})}
   if(p.stealCd>0)p.stealCd--;
   if(p.drunkT>0)p.drunkT--;
+  if(R.M.fastLegs)p.rocketT=Math.max(p.rocketT||0,2);
+  if(p.rocketT>0){p.rocketT--;if(!gr&&B.velocity.y<-1&&R.t%2===0)particles.push({x:B.position.x+rnd(-5,5),y:B.position.y+p.bh/2,vx:rnd(-.5,.5),vy:rnd(1.5,3),l:12,c:pick([C('#ffd84a'),C('#ff7a1a'),C('#e8423a')]),s:1,g:0})}
   if(R.phase==='scored'&&R.scoredBy===p.team){p.armT=180;if(gr&&Math.random()<.045)Body.setVelocity(B,{x:B.velocity.x*.5,y:-6.5})}
   // head: free to wobble +/-10 degrees on the neck
   const h=p.head,rel=wrap(h.angle-B.angle),lim=10*D2R;
@@ -954,7 +1076,7 @@ function step(){
   if(R.court.k==='ship'){R.deck=Math.sin(R.t*.014)*.075;Body.setAngle(R.floor,R.deck);Body.setPosition(R.floor,{x:W/2-Math.sin(R.deck)*100,y:FLOOR+Math.cos(R.deck)*100})}
   updateHoops();
   if(live)hazards();
-  if(live){modTick();modTick2()}
+  if(live){modTick();modTick2();modTick3()}
   const SW=swayCfg();
   for(const p of R.players)controlPlayer(p,live,SW);
   if(live){modPost();modPost2()}
@@ -977,6 +1099,7 @@ function step(){
     if(b.def.k==='tele'&&live&&--b.teleT<=0){teleport(b);continue}
     if(b.def.k==='snow'&&b.grow<2.1&&B.position.y>floorAt(B.position.x)-b.r-2*P&&Math.abs(B.velocity.x)>.6){const gs=1.006;Body.scale(B,gs,gs);b.grow*=gs;b.r*=gs;if((R.t&7)===0){b.sk=ballSpr(b.def,Math.round(b.mul0*b.grow*10)/10);b.spr=BALL_S[b.sk]}if(b.grow>=2.09&&!b.bigSaid){b.bigSaid=1;say('Kartopu kocaman oldu!')}}
     if(b.def.float){Body.applyForce(B,B.position,{x:0,y:-.86*B.mass*engine.gravity.y*engine.gravity.scale});Body.setAngularVelocity(B,B.angularVelocity*.85-wrap(B.angle)*.05)}
+    shapeTick(b,B,live);
     if((b.mg||b.def.fx==='magic')&&live)magicTick(b);
     if(b.def.fx&&bfx2(b,B,live))continue;
     if(b.def.fx&&bfx(b,B,live))continue;
@@ -1289,8 +1412,8 @@ function scoreFx2(b,team,h){const fx=b.def.fx;
   if(fx==='coinflip'){if(Math.random()<.5){G.score[team]-=1;G.score[1-team]+=1;floatText(160,96,'YAZI! SAYI RAKİBE GİTTİ','#e8423a',8)}else floatText(160,96,'TURA! SAYI SENİN','#5fd068',8)}}
 function fx2Draw(b,lx_,ly,a){const fx=b.def.fx,B=b.body;if(!fx)return false;
   if(fx==='ninja'&&!b.holder&&Math.hypot(B.velocity.x,B.velocity.y)>5){if(R.t%3===0)px(lx_+rnd(-3,3),ly+rnd(-3,3),C('#4a4a58'));return true}
-  if(fx==='phase'){blit(b.spr,lx_,ly,a,0,0,.45);return true}
-  if(fx==='decoy'){const fx2=LW-lx_;blit(b.spr,fx2,ly,-a)}
+  if(fx==='phase'){blit((b.vw?b.vw[0]:b.spr),lx_,ly,a,0,0,.45);return true}
+  if(fx==='decoy'){const fx2=LW-lx_;blit((b.vw?b.vw[0]:b.spr),fx2,ly,-a)}
   if(fx==='glitch'&&R.t%4===0){for(let i=0;i<5;i++)rect(lx_+rnd(-8,8),ly+rnd(-6,6),rnd(2,6),1,C(pick(['#ff4fd8','#3fd7ff','#4fd16a'])))}
   return false}
 /* ---------- 50 more mods ---------- */
@@ -1403,6 +1526,80 @@ function modDraw2(fr){const M=R.M,z=R.m2,b2=R.b2;if(!z)return;const t=R.t;
   if(lights.length)for(let y=0;y<LH;y++)for(let x=0;x<LW;x++){let br=0;for(const l of lights){const d=Math.hypot(x-l.x,y-l.y);if(d<l.r)br=Math.max(br,1-d/l.r)}const f=.12+.88*Math.min(1,br*1.6);if(f<.97)shade(x,y,f)}
 }
 
+/* ---------- what each thing does (round banner + collection) ---------- */
+const BD={heavy:'Çok ağır: az gider, hiç sekmez',light:'Çok hafif: delice seker',rainbow:'Basket 2 sayı',gold:'Basket 3 sayı',bomb:'Tutunca fitil yanar, sonra patlar',ice:'Çarptığı oyuncuyu dondurur',
+ beach:'Dev ve hafif, yavaş süzülür',cube:'Köşeli: nereye sekeceği belli olmaz',fire:'Elinde uzun tutarsan yakar',ghost:'Arada bir görünmez olur',egg:'Yere sert düşerse kırılır',balloon:'Havada süzülür',
+ chicken:'Kendi başına gezer, kanat çırpar',soccer:'Ayakla sür, basılı tut, şut çek',bowling:'Oyuncuları labut gibi devirir',snow:'Yuvarlandıkça büyür',disco:'Etrafa renkli ışık saçar',slime:'Değdiği yere yapışır',
+ split:'Yere sert çarpınca ikiye bölünür',tele:'Arada bir başka yere ışınlanır',
+ comet:'Dönerek uçar, parlak iz bırakır',zigzag:'Havada aniden yön değiştirir',moon:'Az yerçekimi: yavaş ve yüksek uçar',anvil:'Taş gibi düşer, yeri sarsar',homing:'Atınca potaya doğru süzülür',magnet:'Yakındaki oyuncuları çeker',
+ repel:'Yakındaki oyuncuları iter',blink:'Göz kırpar gibi kaybolur',turbo:'Her sekişte hızlanır',dead:'Yere değince hiç sekmez',bean:'Yerde kendi kendine zıplar',roller:'Yerde kendi kendine yuvarlanır',
+ zap:'Çarptığını ve uzun tutanı çarpar',sleepy:'Çarptığı oyuncuyu uyutur',punch:'Çarptığı oyuncuyu uçurur',grenade:'Sert düşünce patlar',potato:'Elinde durmaz, kendi fırlar',dice:'Basket 1, 2 ya da 3 sayı',
+ diamond:'Basket 4 sayı',bubble:'Süzülür, dokununca patlar',flipper:'Arada bir yukarı doğru düşer',boomerang:'Atıştan sonra geri döner',snake:'Havada kıvrılarak gider',storm:'Yere çarpınca şimşek çaktırır',
+ quake:'Yere çarpınca herkesi hoplatır',piano:'Her sekişte bir nota çalar',slowmo:'Potaya yaklaşınca zaman yavaşlar',confetti:'Her sekişte konfeti patlatır',smoke:'Arkasında duman bırakır',coin:'Döne döne uçar, para saçar',
+ jelly:'Hiç durmadan seker',sniper:'Atış hiç sapmaz',wild:'Atışlar çok sapar',shrinker:'Her sekişte küçülür',grower:'Her sekişte büyür',pinball:'Çembere çarpınca fırlar',lock:'Elindeyken kimse çalamaz',
+ butter:'Elinden kayıp düşer',portal:'Duvardan girer, karşıdan çıkar',blackhole:'Herkesi içine çeker',vampire:'Kanat çırpar; sayıda rakipten 1 çalar',ricochet:'Oyuncudan hızlanarak seker',
+ honey:'Çarptığı oyuncu yapışır, zor zıplar',spinner:'Çarptığı oyuncuyu döndürür',rocket:'Atınca alev alıp hızlanır',chute:'Paraşüt açar, yavaş iner',cloud:'Uçar, altına yağmur yağdırır',
+ lucky:'Sayı atana rastgele güç verir',mirror:'Yere çarpınca karşıya ışınlanır',chameleon:'Sürekli renk değiştirir',
+ yoyo:'İpiyle atana geri döner',popcorn:'Havada patlayıp zıplar',pingpong:'Minicik, çok seker',melon:'Ağır; yere düşünce etrafa saçılır',shy:'Oyunculardan kaçar',puppy:'Oyuncuların peşinden koşar',
+ glitch:'Titreyip yer değiştirir',timeball:'Arada bir zamanı geri sarar',ninja:'Hızlanınca görünmez olur',bee:'Vızıldar, çarptığını sokar',cactus:'Elinde tutamazsın, batar',decoy:'Ekranda bir de sahtesi var',
+ heavier:'Havada gittikçe ağırlaşır',feather:'Tüy gibi süzülür',lavaball:'Düştüğü yeri yakar',skate:'Yerde hiç yavaşlamaz',warp:'Bazen potanın üstüne ışınlanır',partyball:'Her sekişte parti başlar',
+ sumo:'Kocaman; çarptığını uçurur',mini:'Minicik bir top',bananab:'Çarptığı oyuncuyu kaydırır',stinky:'Kokusu oyuncuları uzaklaştırır',speaker:'Bas sesiyle herkesi iter',spring:'Yere değince çok yükseğe fırlar',
+ gum:'Oyuncunun kafasına yapışır',hoopmag:'Potaya doğru çekilir',runaway:'Potadan kaçar ama 3 sayı',giggle:'Çarptığını gıdıklar',swapper:'Çarptığınla yer değiştirirsin',cursed:'Tutan oyuncu zor zıplar',
+ turtle:'Yerde ağır ağır yürür',bullet:'Dümdüz ve hızlı uçar',drunkball:'Yalpalar, tutanı da yalpalatır',winter:'Sayı olunca rakip donar',popper:'Dokununca patlar',magic:'Sürekli başka şeye dönüşür',
+ pinata:'2 sayı; şeker saçar',robot:'Dokunmazsan kendi potaya gider',worm:'Yerde sürünerek gezer',sun:'Etrafı aydınlatır, eli yakar',shadow:'Sahne kararır, sadece o parlar',heart:'Çarptığı aşık olup donar',
+ paint:'Düştüğü yeri boyar',tennis:'Küçük ve zıpzıp',frisbee:'Havada süzülerek uçar',duck:'Vak vak diye paytak yürür',meteorb:'Sert düşünce krater açar',phase:'Oyuncuların içinden geçer',
+ lucky7:'Bazen 7 sayı birden',coinflip:'Yazı gelirse sayı rakibe gider'};
+const MD={suit:'Herkes takım elbiseli',crazy:'Herkes deli gibi sallanır',moving:'Potalar aşağı yukarı gider',wind:'Rüzgâr topu sürükler',superJump:'Herkes çok yükseğe zıplar',slowmo:'Her şey ağır çekimde',
+ tramp:'Zemin zıplatır',three:'Her takımda 3 oyuncu',twoBalls:'Sahada 2 top',antigrav:'Arada bir her şey yukarı düşer',iceFloor:'Zemin buz gibi kaygan',bouncy:'Her şey çok seker',fast:'Her şey hızlı',
+ rope:'Takım arkadaşları iple bağlı',quake:'Arada deprem olur',dark:'Sadece oyuncuların çevresi aydınlık',roam:'Potalar sağa sola gezer',ghosts:'Oyuncular yarı görünmez',rain:'Zemin kaygan, şimşek çakar',
+ reverse:'Eğildiğin yönün tersine zıplarsın',shrink:'Pota gittikçe daralır',mines:'Mayına basan havaya uçar',powerRain:'Güçler çok sık düşer',heavy:'Herkes az zıplar',multi:'Sahada 4 top birden',
+ bhole:'Ortadaki delik her şeyi çeker',fan:'Ortadaki vantilatör yukarı üfler',conveyor:'Zemin herkesi bir yöne taşır',meteor:'Gökten taş yağar',lowGrav:'Her şey yavaş düşer',highGrav:'Her şey hızlı düşer',
+ shuffle:'Oyuncular rastgele ışınlanır',hoopSwap:'Potalar yer değiştirir: ters at!',bigHoops:'Potalar kocaman',tinyHoops:'Potalar minicik',bumpers:'Tamponlar topu fırlatır',rubberWalls:'Duvarlar topu geri fırlatır',
+ sticky:'Yerde kaymak yok',ballGrow:'Toplar gittikçe şişer',circleHoop:'Potalar daire çizer',hoopJump:'Potalar arada zıplar',teleBalls:'Toplar arada ışınlanır',extraBall:'Sürekli yeni top düşer',
+ freezer:'Rastgele biri donar',bolt:'İşaretli yere yıldırım düşer',twister:'Hortum her şeyi havaya kaldırır',tilt:'Saha bir yana yatar',wave:'Dalga gelince zıpla',invis:'Oyuncular görünmez',
+ invisBall:'Top çoğu zaman görünmez',mirror:'Ekran sağ-sol ters',upside:'Ekran baş aşağı',shaky:'Ekran sürekli sallanır',party:'Disko ışıkları',nightvis:'Yeşil gece görüşü',confRain:'Konfeti yağar',
+ blizzard:'Kar fırtınası topu savurur',fog:'Sis her yeri kaplar',fastLegs:'Hangi yöne eğilirsen eğil, dümdüz yukarı',luckyJump:'Her zıplama farklı güçte',drunkAll:'Herkes yalpalar',magHands:'Top ele kendi gelir',
+ hotBall:'Top elde durmaz',snipers:'Atışlar hiç sapmaz',dblPts:'Her basket iki katı sayı',catchup:'Gerideki takımın basketi çift sayar',longBonus:'Uzaktan atışa +1',lava:'Zemin arada lav olur: zıpla!',
+ trampSpots:'Mavi noktalar fırlatır',banana:'Muza basan kayar',birds:'Kuşlar topu kapar',ufo:'UFO birini havaya çeker',cannon:'Yandan gülle atılır',floaty:'Oyuncular balon gibi hafif',ballFlip:'Toplar arada yukarı düşer',
+ jetpack:'Havada basılı tut: uç',pogo:'Yere değen kendi zıplar',magFloor:'Zemin oyuncuları aşağı çeker',springWalls:'Duvarlar oyuncuyu fırlatır',hoopGun:'Potalar gülle atar',hoopRise:'Potalar gittikçe yükselir',
+ hoopDrift:'Potalar ortaya yaklaşır',hoopPull:'Toplar potaya çekilir',floorReset:'Top yere değerse baştan',slowBalls:'Toplar ağır çekimde',fastBalls:'Toplar gittikçe hızlanır',spinner:'Ortada dönen çubuk var',
+ elevator:'Ortada inip çıkan platform',platforms:'Üstüne çıkılan platformlar',midWall:'Ortada alçak duvar',portals:'Portala giren top diğerinden çıkar',gZones:'Solda her şey hafif, sağda ağır',
+ gusts:'Ani rüzgâr her şeyi savurur',hail:'Dolu kafalara yağar',fireworks:'Havai fişek gösterisi',spotlight:'Sadece spot ışığı aydınlık',retro:'Eski televizyon görüntüsü',wavy:'Ekran dalgalanır',
+ bigPixel:'Kocaman pikseller',invert:'Renkler ters',rainbowW:'Her yer gökkuşağı',timePulse:'Arada zaman yavaşlar',crazyTime:'Zaman hızlanıp yavaşlar',freezeTag:'Rakibe değen biri donar',
+ bodySwap:'Rakiplerle yer değişirsin',rubberMen:'Oyuncular yere düşünce seker',teamMag:'Takım arkadaşları birbirini çeker',oppRepel:'Rakipler birbirini iter',coins:'3 altın topla, 1 sayı al',
+ bombRain:'Gökten bomba düşer',shark:'Yüzgece basan ısırılır',zombie:'Zombiye değen donar',dino:'Dinozor önüne geleni savurur',train:'Uyarıyı görünce zıpla!',balloons:'Balonlar topu yukarı atar',
+ cloudBounce:'Bulutlar topu zıplatır',laser:'Lazere değen donar',saw:'Testereye basan uçar',snowmen:'Kardan adamlar yol keser',tires:'Lastikler topu fırlatır',closeHoops:'Potalar birbirine çok yakın',
+ ctrlSwap:'Arada rakibi sen yönetirsin',autoJump:'Oyuncular kendi kendine zıplar',goldenHoop:'Parlayan potaya atan 3 sayı alır',sepia:'Sessiz film gibi'};
+function bannerDesc(){const out=[];if(R.ballT.k!=='normal'&&G.mode!=='soccer'&&BD[R.ballT.k])out.push(BD[R.ballT.k]);for(const m of R.mods){if(out.length>=2)break;if(MD[m.k])out.push(MD[m.k])}return out}
+/* ---------- creatures move on their own, like the chicken ---------- */
+function shapeTick(b,B,live){
+  if(!live||b.holder)return;const k=b.def.k,t=R.t,fl=B.position.y>floorAt(B.position.x)-b.r-2*P;
+  if(k==='duck'&&fl&&t%46===0){if(B.position.x<16*P)b.vf=1;if(B.position.x>W-16*P)b.vf=-1;Body.setVelocity(B,{x:(b.vf||1)*2.2,y:-2.6})}
+  if(k==='turtle'&&fl){if(B.position.x<14*P)b.vf=1;else if(B.position.x>W-14*P)b.vf=-1;Body.setVelocity(B,{x:(b.vf||1)*1.1,y:B.velocity.y})}
+  if(k==='vampire'&&!fl&&t-(b.thrT||-999)>70&&B.velocity.y>1&&t%22===0)Body.setVelocity(B,{x:B.velocity.x+rnd(-1.5,1.5),y:-3.2});
+}
+/* ---------- portals rule ---------- */
+const PORT=[[70,104],[250,104]];
+function modInit3(){if(R.bannerT>0&&bannerDesc().length)R.bannerT=260}
+function modTick3(){if(!R.M.portals)return;const t=R.t;for(const b of R.balls){if(b.holder||b.ptT>t)continue;const B=b.body;for(let i=0;i<2;i++){if(Math.hypot(B.position.x-PORT[i][0]*P,B.position.y-PORT[i][1]*P)<8*P){const o=PORT[1-i];poof(B.position.x,B.position.y);Body.setPosition(B,{x:o[0]*P,y:o[1]*P});b.ptT=t+35;b.trail.length=0;b.prevY=o[1]*P;poof(o[0]*P,o[1]*P);sfx.tele();break}}}}
+function modDraw3(){if(!R.M.portals)return;PORT.forEach((q,i)=>{const c1=C(i?'#3fa6ff':'#ff9f2e'),c2=C(i?'#c0e4ff':'#ffd8a0');for(let a=0;a<6.28;a+=.12){px(q[0]+Math.cos(a)*5,q[1]+Math.sin(a)*8,c1);px(q[0]+Math.cos(a)*4,q[1]+Math.sin(a)*7,c1)}for(let j=0;j<5;j++){const a=R.t*.12+j*1.26,d=1+((R.t*.1+j)%3);px(q[0]+Math.cos(a)*d,q[1]+Math.sin(a)*d*1.6,c2)}})}
+/* ---------- collection: every object and rule, tap one to play with it ---------- */
+let PICK=null,colTab='b',colSet=new Set();try{colSet=new Set(JSON.parse(localStorage.getItem('brp3_col')||'[]'))}catch(e){}
+function colAdd(k){if(colSet.has(k))return;colSet.add(k);try{localStorage.setItem('brp3_col',JSON.stringify([...colSet]))}catch(e){}if(colSet.size>=10)unlock('col10');if(colSet.size>=50)unlock('col50')}
+function sprCanvas(s){const c=document.createElement('canvas');c.width=s.w;c.height=s.h;try{const x=c.getContext('2d'),im=x.createImageData(s.w,s.h);new Uint32Array(im.data.buffer).set(s.d);x.putImageData(im,0,0)}catch(e){}return c}
+function showCol(){
+  hideAll();state='menu';const L=$('colList');L.innerHTML='';
+  $('colInfo').textContent=colTab==='b'?`Birine dokun: her tur onunla oynanır. Yeşil çerçeve = onunla sayı attın (${colSet.size}/${BALLS.length}).`:`Bir kurala dokun: her tur o kuralla oynanır (${MODS.length} kural).`;
+  const mk=(name,desc,s,done,fn)=>{const b=document.createElement('button');b.type='button';b.className='ci'+(done?' done':'');if(s)b.appendChild(sprCanvas(s));const d=document.createElement('div'),n=document.createElement('b'),e=document.createElement('span');n.textContent=name;e.textContent=desc||'';d.appendChild(n);d.appendChild(e);b.appendChild(d);b.onclick=fn;L.appendChild(b)};
+  if(colTab==='b')BALLS.forEach(d=>mk(d.n,BD[d.k]||'Bildiğin basket topu',BALL_S[d.k],colSet.has(d.k),()=>{PICK={ball:d.k};start('match')}));
+  else MODS.forEach(m=>mk(m.n,MD[m.k]||'',null,false,()=>{PICK={mods:[m.k]};start('match')}));
+  document.querySelectorAll('#colTabs button').forEach(b=>b.setAttribute('aria-pressed',String(b.dataset.t===colTab)));
+  $('colOv').hidden=false;$('colOv').scrollTop=0;
+}
+$('colBtn').onclick=()=>{colTab='b';showCol()};
+$('colBack').onclick=()=>{hideAll();buildKitSeg();$('menu').hidden=false};
+document.querySelectorAll('#colTabs button').forEach(b=>b.onclick=()=>{colTab=b.dataset.t;showCol()});
+
 function explode(b){
   const B=b.body,x=B.position.x,y=B.position.y;
   if(b.holder){b.holder.have=false;b.holder.ready=false;b.holder=null}
@@ -1422,7 +1619,7 @@ function applyPower(t,team){
   if(t.k==='shield')fx.shield=480;
   if(t.k==='bighoop')fx.bighoop=600;
   if(t.k==='double')fx.double=1;
-  if(t.k==='rocket')R.players.forEach(p=>{if(p.team===team)p.rocket=true});
+  if(t.k==='rocket')R.players.forEach(p=>{if(p.team===team)p.rocketT=540});
   if(t.k==='drunk')R.players.forEach(p=>{if(p.team!==team)p.drunkT=300});
   if(t.k==='freeze'){R.players.forEach(p=>{if(p.team!==team)p.frozenT=150});sfx.freeze()}
   if(t.k==='narrow')fx.narrow=600;
@@ -1457,12 +1654,12 @@ function scored(h,b){
   say(own?'Bu kendi potasıydı!':head?'Kafayla attı!':punch?(R.foot?'Havada vole, muhteşem!':'Voleyle gömdü!'):dunk?'Pota sallandı!':long?(R.foot?'Uzaktan füze gibi şut!':'Uzaktan bomba!'):pick(R.foot?['Gooool!','Ağlara gömdü!','Ayağına sağlık!','Muhteşem şut!']:['Ne atış!','Filelere gömdü!','Tam isabet!','Harika!','Basket!']));
   if(R.court.k==='stadium'||R.court.k==='neon')fireworks(4);
   if(isHuman(team)&&!own){life.baskets++;if(dunk)life.dunks++;saveLife();unlock('first');if(R.foot){st.goals++;if(st.goals>=3)unlock('goal3');if(punch&&lt.kind==='volley')unlock('volley')}if(dunk)unlock('dunk');if(st.long>=3)unlock('long3');if(head)unlock('head');
-    const k=b.def.k;if(k==='chicken')unlock('chicken');if(k==='bomb')unlock('bomb');if(k==='egg')unlock('egg');if(k==='gold')unlock('gold');if(R.court.k==='moon')unlock('moon');if(R.court.k==='halloween')unlock('halloween');if(R.court.k==='space')unlock('space');if(k==='split')unlock('split')}
+    const k=b.def.k;colAdd(k);if(k==='chicken')unlock('chicken');if(k==='bomb')unlock('bomb');if(k==='egg')unlock('egg');if(k==='gold')unlock('gold');if(R.court.k==='moon')unlock('moon');if(R.court.k==='halloween')unlock('halloween');if(R.court.k==='space')unlock('space');if(k==='split')unlock('split')}
   if(own&&isHuman(1-team))unlock('own');
 }
 function record(){
   R.rec.push({p:R.players.map(pframe),
-    b:R.balls.map(b=>[b.body.position.x,b.body.position.y,b.body.angle,b.def.k==='chicken'&&b.face<0?'chickenL':b.sk]),hy:R.hoops.map(h=>h.rimY),n:R.hoops.map(h=>h.net)});
+    b:R.balls.map(b=>b.def.k!=='chicken'&&b.vw?[b.body.position.x,b.body.position.y,b.vw[1],b.vw[0]]:[b.body.position.x,b.body.position.y,b.body.angle,b.def.k==='chicken'&&b.face<0?'chickenL':b.sk]),hy:R.hoops.map(h=>h.rimY),n:R.hoops.map(h=>h.net)});
   if(R.rec.length>170)R.rec.shift();
 }
 function pframe(p){const sc=(R.phase==='scored'||R.phase==='replay')&&R.scoredBy>=0;
@@ -1484,7 +1681,7 @@ function floatText(x,y,s,c,size){texts.push({x:clamp(x,40,280),y,s,c,size,l:90})
 function isHuman(t){return(G.mode==='match'||G.mode==='soccer')&&!G.solo&&!G.coop?true:t===0}
 function say(s){if(R)R.say={s,t:150}}
 function onBlock(pl){G.stats[pl.team].blocks++;floatText(pl.head.position.x/P,pl.head.position.y/P-16,'BLOK!','#ffffff',8);say(pick(['Blok! Duvar gibi!','Geçit yok!','Engelledi!']));sfx.steal();if(isHuman(pl.team))unlock('block')}
-function rocketFx(p){const B=p.body;for(let i=0;i<16;i++)particles.push({x:B.position.x+rnd(-6,6),y:B.position.y+p.bh/2,vx:rnd(-1,1),vy:rnd(1,3),l:rnd(14,26),c:pick([C('#ffd84a'),C('#ff7a1a'),C('#e8423a')]),s:Math.random()<.4?2:1,g:-.05});sfx.boom()}
+function rocketFx(p){const B=p.body;for(let i=0;i<16;i++)particles.push({x:B.position.x+rnd(-6,6),y:B.position.y+p.bh/2,vx:rnd(-1,1),vy:rnd(1,3),l:rnd(14,26),c:pick([C('#ffd84a'),C('#ff7a1a'),C('#e8423a')]),s:Math.random()<.4?2:1,g:-.05});noise(.25,.1,500,.8);beep(160,.2,'sawtooth',.03,300)}
 function fireworks(n){for(let k=0;k<n;k++){const x=rnd(60,260)*P,y=rnd(14,50)*P,c=C(pick(['#ff4d4d','#ffd84a','#4fd16a','#3fa6ff','#ff7ad1','#ffffff']));for(let i=0;i<34;i++){const a=i/34*6.28,s=rnd(2.5,4.5);particles.push({x,y,vx:Math.cos(a)*s,vy:Math.sin(a)*s,l:rnd(45,75),c,s:1,g:.04})}}sfx.pop()}
 function breakEgg(b){const x=b.body.position.x,y=b.body.position.y;Composite.remove(engine.world,b.body);R.balls.splice(R.balls.indexOf(b),1);R.respawn={def:b.def,t:50};
   for(let i=0;i<26;i++){const a=-Math.PI*rnd(.05,.95),s=rnd(1.5,5);particles.push({x,y:y-4,vx:Math.cos(a)*s,vy:Math.sin(a)*s,l:rnd(20,40),c:pick([C('#fff4dc'),C('#ffd84a'),C('#ffb02e')]),s:Math.random()<.4?2:1,g:.15})}
@@ -1838,11 +2035,13 @@ function drawPlayer(p,bx,by,ba,hx,hy,ha,armT,fz,legA,mood){
   blit(p.sprA,(sx+ac.x)/P,(sy+ac.y)/P,phi,tc,.5,dz);
   if(fz){const x=bx/P,y=by/P;for(let i=0;i<3;i++)px(x+rnd(-5,5),y+rnd(-12,10),WHITE)}
   if(p.drunkT>0){const a=R.t*.15;for(let i=0;i<3;i++)px(hx/P+Math.cos(a+i*2.1)*5,hy/P-p.hr/P-4+Math.sin(a+i*2.1)*1.5,C('#c27aff'))}
-  if(p.rocket&&R.t%10<5)px(bx/P,by/P+p.bh/P/2+1,C('#ff7a1a'));
+  if(p.rocketT>0&&(p.rocketT>90||R.t%10<5))for(const sx of [-1,1]){const f=rot(sx*p.bw*.27,p.bh/2-P,ba),fx_=(bx+f.x)/P,fy_=(by+f.y)/P;rect(fx_-1.5,fy_-1,3,2,C('#e8423a'));px(fx_,fy_+1,C('#c8ccd8'));if(R.t%4<2)px(fx_,fy_+2,C('#ffd84a'))}
   if(p.have&&R.fx[p.team].shield>0){const cx=bx/P,cy=by/P;for(let a=0;a<6.28;a+=.22)if(((a*10+R.t*.3)|0)%3)px(cx+Math.cos(a)*13,cy+Math.sin(a)*15,C('#9fe0ff'))}
 }
 function drawBallAt(b,x,y,a){
+  const vw=b.vw=ballView(b,a);a=vw[1];
   const lx_=x/P,ly=y/P,k=b.def.k,tr=b.trail;
+  if(b.def.fx==='yoyo'&&!b.holder&&b.thrP&&R.t-(b.thrT||-999)<110){const h=hand(b.thrP);line(lx_,ly,h.x/P,h.y/P,C('#e8e8f0'))}
   if(k==='rainbow')for(let i=0;i<tr.length-2;i+=2){rect(tr[i]/P-1,tr[i+1]/P-1,2,2,C(RB[(i/2+R.t)%6|0]))}
   else if(tr.length>6){const v=Math.hypot(tr[tr.length-2]-tr[tr.length-6],tr[tr.length-1]-tr[tr.length-5]);if(v>16)for(let i=0;i<tr.length-4;i+=4)px(tr[i]/P,tr[i+1]/P,C(k==='gold'?'#ffe08a':k==='ice'?'#d6f6ff':'#ffb066'))}
   if(fx2Draw(b,lx_,ly,a))return;
@@ -1853,16 +2052,16 @@ function drawBallAt(b,x,y,a){
     if(fx==='blink'&&R.t%90>=50){if(R.t%5===0)px(lx_+rnd(-4,4),ly+rnd(-4,4),C('#ffd84a'));return}
     if(fx==='parachute'&&!b.holder&&b.body.velocity.y>1){const cy=ly-12;for(let xx=-7;xx<=7;xx++){const hh=Math.round(Math.sqrt(49-xx*xx)*.5);rect(lx_+xx,cy-hh,1,hh+1,C(((xx+7)>>1)&1?'#e8423a':'#ffffff'))}line(lx_-7,cy,lx_-2,ly-3,C('#e8e8f0'));line(lx_+7,cy,lx_+2,ly-3,C('#e8e8f0'))}
     if(fx==='sniper'&&b.holder){const hp=b.holder,ho=R.hoops[hp.team?0:1],tx=ho.cx/P,ty=ho.rimY/P;for(let i=1;i<20;i++){if(i%2)continue;const u=i/20;px(lx_+(tx-lx_)*u,ly+(ty-ly)*u-Math.sin(u*3.14)*18,C('#ff3a3a'))}}
-    if(fx==='chameleon'){blit(b.spr,lx_,ly,a,C(RB[(R.t>>4)%6]),.6);return}
+    if(fx==='chameleon'){blit((b.vw?b.vw[0]:b.spr),lx_,ly,a,C(RB[(R.t>>4)%6]),.6);return}
     if(fx==='diamond'&&R.t%6===0)px(lx_+rnd(-6,6),ly+rnd(-6,6),WHITE);
     if(fx==='zap'&&R.t%3===0){const q=rnd(0,6.28);line(lx_+Math.cos(q)*5,ly+Math.sin(q)*5,lx_+Math.cos(q)*8,ly+Math.sin(q)*8+rnd(-2,2),C('#ffe14a'))}
     if(fx==='sleepy'&&R.t%40<24){const zy=ly-9-(R.t%40)/6,zc=C('#d8c8ff');rect(lx_+5,zy,3,1,zc);px(lx_+6,zy+1,zc);rect(lx_+5,zy+2,3,1,zc)}
     if(fx==='blackhole')for(let i=0;i<6;i++){const q=R.t*.15+i*1.05,dd=7+((R.t+i*7)%14)*.6;px(lx_+Math.cos(q)*dd,ly+Math.sin(q)*dd*.6,C('#9a6bff'))}
   }
-  if(k==='ghost'){if(R.t%100>=62){if(R.t%6===0)px(lx_+rnd(-4,4),ly+rnd(-4,4),C('#ddd6ff'));return}blit(b.spr,lx_,ly,a,0,0,.3);return}
+  if(k==='ghost'){if(R.t%100>=62){if(R.t%6===0)px(lx_+rnd(-4,4),ly+rnd(-4,4),C('#ddd6ff'));return}blit((b.vw?b.vw[0]:b.spr),lx_,ly,a,0,0,.3);return}
   if(k==='chicken'){blit(b.face<0?BALL_S.chickenL:BALL_S.chicken,lx_,ly,b.onF&&!b.holder?0:a);if(!b.onF&&!b.holder&&R.t%8<4){px(lx_-3,ly-2,WHITE);px(lx_+3,ly-2,WHITE)}return}
   if(k==='balloon'){const kn=rot(0,b.r/P,a);let x0=lx_+kn.x,y0=ly+kn.y;for(let i=0;i<10;i++){const x1=x0+Math.sin(R.t*.1+i)*.6,y1=y0+1;px(x1,y1,C('#e8e8f0'));x0=x1;y0=y1}}
-  blit(b.spr,lx_,ly,a);
+  blit((b.vw?b.vw[0]:b.spr),lx_,ly,a);
   if(k==='fire'&&R.t%2===0)particles.push({x:x+rnd(-.6,.6)*b.r,y:y+rnd(-.6,.6)*b.r,vx:rnd(-.4,.4),vy:-rnd(.6,1.6),l:14,c:pick([C('#ffd84a'),C('#ff7a1a'),C('#e8423a')]),s:1,g:-.03});
   if(k==='bomb'){const sp=rot(0,-b.r/P-1.5,a);px(lx_+sp.x,ly+sp.y,C(R.t%8<4?'#ffd84a':'#ff5a1a'));if(b.fuse<360){const n=Math.ceil(b.fuse/60);digits(n,lx_,ly-14,1,C(n<=2?'#ff4d4d':'#ffffff'),OUT)}}
   if(k==='gold'&&R.t%10===0)px(lx_+rnd(-6,6),ly+rnd(-6,6),WHITE);
@@ -1889,7 +2088,7 @@ function drawWorld(){
       if(R.foot){if(p.have)powerBar(p)}
       else if(p.have){const x=Math.round(p.head.position.x/P),y=Math.round(p.head.position.y/P-p.hr/P-7),f=Math.round(p.armT/180*9);rect(x-5,y,11,3,OUT);rect(x-4,y+1,9,1,C('#33385a'));rect(x-4,y+1,f,1,C(p.armT>=150?'#5fd068':'#ffd84a'));if(!p.ready&&R.t%30<15){px(x,y-2,C('#ffc43d'))}}}
     R.balls.forEach(b=>drawBallAt(b,b.body.position.x,b.body.position.y,b.body.angle));
-  }else bs.forEach(q=>blit(BALL_S[q[3]],q[0]/P,q[1]/P,q[2]));
+  }else bs.forEach(q=>blit(typeof q[3]==='string'?BALL_S[q[3]]:q[3],q[0]/P,q[1]/P,q[2]));
   R.hoops.forEach((h,i)=>drawHoop(h,fr?fr.hy[i]:h.rimY,0,true));
   if(!fr)for(const u of R.pups){const uy=u.y+Math.sin(R.t*.08+u.ph)*2;if(u.life<120&&R.t%10<5)continue;const rr=6+Math.sin(R.t*.15)*1;for(let a=0;a<6.28;a+=.25)px(u.x+Math.cos(a)*rr,uy+Math.sin(a)*rr,C(u.t.c));blit(ICONS[u.t.k],u.x,uy,0)}
   for(let i=particles.length-1;i>=0;i--){const q=particles[i];q.x+=q.vx;q.y+=q.vy;q.vy+=q.g;q.vx*=.99;q.l--;if(q.l<=0||q.y>FLOOR+120){particles.splice(i,1);continue}rect(q.x/P,q.y/P,q.s,q.s,q.c)}
@@ -1901,7 +2100,7 @@ function drawWorld(){
   if(R.agOn>0)for(let y=0;y<LH;y+=2)for(let x=0;x<LW;x++)tint(x,y,C('#c27aff'),.1);
   if(!fr)for(const b of R.balls)if(b.def.k==='disco'){const x=b.body.position.x/P,y=b.body.position.y/P;for(let i=0;i<16;i++){const a=b.body.angle*1.5+i*.393+R.t*.01,d=36+((i*53)%96),lx2=x+Math.cos(a)*d,ly2=y+Math.sin(a)*d*.55;if(ly2>0&&ly2<LH){const c=C(RB[i%6]);px(lx2,ly2,c);px(lx2+1,ly2,c);px(lx2,ly2+1,c)}}}
   if(R.M.gray){for(let i=0;i<buf.length;i++){const c=buf[i],l=((c&255)*.3+((c>>8)&255)*.59+((c>>16)&255)*.11)|0;buf[i]=(0xff000000|(l<<16)|(l<<8)|l)>>>0}if(R.t%9<2){const sx=Math.random()*LW|0;for(let y=0;y<LH;y++)if(Math.random()<.7)shade(sx,y,.7)}}
-  modDraw2(fr);modDraw(fr);
+  modDraw3();modDraw2(fr);modDraw(fr);
   // score boxes (like the original: bottom corners)
   for(const t of [0,1]){if((G.mode==='practice'&&t===1)||R.shoot)break;const x=t?282:4,col=C(G.kits[t].ui);rect(x,159,34,18,OUT);rect(x+1,160,32,16,col);rect(x+1,174,32,2,C(G.kits[t].d));digits(G.score[t],x+17,163,2,WHITE,OUT);
     if(G.fire===t){for(let i=0;i<4;i++)px(x+4+i*8+rnd(-1,1),157-rnd(0,3),C(pick(['#ffd84a','#ff7a1a'])))}
@@ -1933,9 +2132,10 @@ function drawHUD(){
   if(G.timedMatch&&R.phase!=='replay'){if(G.golden)txt('ALTIN SAYI',160,10,8,'#ffc43d');else{const sc=Math.ceil(G.timed/60);txt(Math.floor(sc/60)+':'+String(sc%60).padStart(2,'0'),160,10,8,sc<=10?'#ff4d4d':'#ffffff')}}
   if(G.mode==='survive'&&R.phase!=='replay'){txt('SAYI '+G.surv+' · '+(['','KOLAY','ORTA','ZOR'][G.cpu]||'ZOR'),160,10,8,'#ffc43d');txt('REKOR '+(life.surv||0),8,8,8,'#8e98c8','left');if(G.round===1&&R.t<500)txt('İLK YEDİĞİN SAYIDA OYUN BİTER',160,160,8,'#ffffff')}
   if(R.phase==='replay'){txt('TEKRAR',18,5,8,'#ffffff','left');txt('ATLAMAK İÇİN BAS',160,LH-4.5,8,'#c9cde8');}
-  if(R.bannerT>0&&R.phase!=='replay'){ctx.globalAlpha=Math.min(1,R.bannerT/30);bannerLines().forEach((l,i)=>txt(l,160,22+i*12,8,i===0&&R.mods.length===0&&R.ballT.k==='normal'&&R.court.k==='street'?'#ffffff':'#ffc43d'));ctx.globalAlpha=1}
-  if(R.phase==='intro')txt(R.phaseT>35?'HAZIR':'BAŞLA!',160,70,16,'#ffc43d');
-  if(R.say&&R.say.t>0&&R.phase!=='replay'){R.say.t--;ctx.globalAlpha=Math.min(1,R.say.t/20);txt(R.say.s,160,R.bannerT>0?60:(R.shoot?44:38),8,'#e8ecff');ctx.globalAlpha=1}
+  if(R.bannerT>0&&R.phase!=='replay'){ctx.globalAlpha=Math.min(1,R.bannerT/30);const bl=bannerLines();bl.forEach((l,i)=>txt(l,160,22+i*12,8,i===0&&R.mods.length===0&&R.ballT.k==='normal'&&R.court.k==='street'?'#ffffff':'#ffc43d'));bannerDesc().forEach((l,i)=>txt(l,160,22+(bl.length+i)*12,8,'#ffffff'));ctx.globalAlpha=1}
+  const bn=R.bannerT>0?bannerLines().length+bannerDesc().length:0;
+  if(R.phase==='intro')txt(R.phaseT>35?'HAZIR':'BAŞLA!',160,Math.max(70,40+bn*12),16,'#ffc43d');
+  if(R.say&&R.say.t>0&&R.phase!=='replay'){R.say.t--;ctx.globalAlpha=Math.min(1,R.say.t/20);txt(R.say.s,160,R.bannerT>0?Math.max(60,24+bn*12):(R.shoot?44:38),8,'#e8ecff');ctx.globalAlpha=1}
   if(G.mode==='practice'){txt(`ATIŞ ${G.shots}  BASKET ${G.made}  %${G.shots?Math.round(G.made/G.shots*100):0}`,160,8,8,'#ffffff');txt('MENÜ: ESC',160,174,8,'#8e98c8')}
   else if(R.foot&&(G.fh||0)<=2&&R.t<700&&R.phase!=='scored'&&R.phase!=='replay')txt('DOKUN:AL · BASILI TUT:GÜÇ · BIRAK:ŞUT',160,171,8,'#ffffff');
   else if(G.round===1&&R.t<600&&R.phase!=='scored'&&R.phase!=='replay')txt('BASILI TUT: ZIPLA + KOL · BIRAK: AT',160,171,8,'#ffffff');
@@ -1951,7 +2151,7 @@ function drawToast(){
 }
 function drawMenuBG(t){
   T=buf;grad(0,FY,['#f7b98a','#ffd3a4','#ffe6c4']);rect(0,FY,LW,LH-FY,C('#4b4d55'));rect(0,FY,LW,2,C('#5a5c64'));rect(0,104,LW,8,C('#5fae3c'));
-  const ks=['normal','soccer','rainbow','gold','bomb','beach','disco','ice','cube','tele','heavy'];
+  const ks=['normal','duck','boomerang','soccer','rocket','heart','bananab','ninja','frisbee','anvil','chicken'];
   ks.forEach((k,i)=>{const s=BALL_S[k],x=((t*.45*(1+i*.12)+i*44)%(LW+40))-20,yb=150-s.h/2,y=yb-Math.abs(Math.sin(t*.032+i*1.1))*(70+i*4);shadowAt(x,8);blit(s,x,y,t*.05*(i%2?1:-1))});
 }
 
@@ -1974,7 +2174,7 @@ requestAnimationFrame(frame);
 /* ---------- menus & flow ---------- */
 let CUP=null;
 const shuffled=()=>[...CPU_TEAMS].sort(()=>Math.random()-.5);
-function hideAll(){['menu','pauseOv','overOv','cupOv','achOv'].forEach(id=>$(id).hidden=true)}
+function hideAll(){['menu','pauseOv','overOv','cupOv','achOv','colOv'].forEach(id=>$(id).hidden=true)}
 function start(mode){ensureAudio();hideAll();state='play';paused=false;acc=0;newMatch(mode)}
 function showCup(){hideAll();state='cup';R=null;$('hud').hidden=true;$('tbL').hidden=true;$('tbR').hidden=true;
   $('cupStage').textContent=['ÇEYREK FİNAL','YARI FİNAL','FİNAL'][CUP.stage];
@@ -2017,7 +2217,7 @@ function gameOver(t){
   if(cup&&win&&CUP.stage>=2)for(let i=0;i<3;i++)setTimeout(()=>{if(R)confetti(rnd(300,980),200,C('#ffc43d'))},i*300);
 }
 function togglePause(){if(state!=='play')return;paused=!paused;$('pauseOv').hidden=!paused;pressed[0]=pressed[1]=false}
-function toMenu(){state='menu';paused=false;R=null;G=null;hideAll();['hud','tbL','tbR'].forEach(id=>$(id).hidden=true);buildKitSeg();$('menu').hidden=false}
+function toMenu(){state='menu';paused=false;R=null;G=null;PICK=null;hideAll();['hud','tbL','tbR'].forEach(id=>$(id).hidden=true);buildKitSeg();$('menu').hidden=false}
 $('startBtn').onclick=()=>start('match');
 $('practiceBtn').onclick=()=>start('practice');
 $('shootBtn').onclick=()=>start('shoot');
